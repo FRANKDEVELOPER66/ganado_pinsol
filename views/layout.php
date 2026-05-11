@@ -18,7 +18,7 @@
             </button>
             <a class="navbar-brand" href="/ejemplo/">
                 <img src="<?= asset('./images/pinsol_.png') ?>" width="35px'" alt="pinsol" >
-                INICIO
+                Inicio
             </a>
             <div class="collapse navbar-collapse" id="navbarToggler">
                 

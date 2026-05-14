@@ -1,5 +1,7 @@
 import { Toast } from '../funciones';
 import Swal from 'sweetalert2';
+import { Dropdown } from "bootstrap";
+
 
 const BASE = '/ganado_pinsol';
 

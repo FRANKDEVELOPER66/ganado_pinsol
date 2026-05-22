@@ -25,29 +25,44 @@ class LotesController
     {
         getHeadersApi();
 
-        $lote = new Lotes([
-            'finca_id'         => (int)($_POST['finca_id']         ?? 0),
-            'nombre'           => trim($_POST['nombre']            ?? ''),
-            'tipo'             => $_POST['tipo']                   ?? 'bovino',
-            'etapa'            => $_POST['etapa']                  ?? 'cría',
-            'cantidad_cabezas' => (int)($_POST['cantidad_cabezas'] ?? 0),
-            'cantidad_actual'  => (int)($_POST['cantidad_cabezas'] ?? 0),
-            'peso_promedio_kg' => $_POST['peso_promedio_kg']       ?? null,
-            'fecha_ingreso'    => $_POST['fecha_ingreso']          ?? null,
-            'observaciones'    => trim($_POST['observaciones']     ?? '')
-        ]);
+        $finca_id        = (int)($_POST['finca_id']         ?? 0);
+        $nombre          = trim($_POST['nombre']            ?? '');
+        $tipo            = $_POST['tipo']                   ?? 'bovino';
+        $cantidad        = (int)($_POST['cantidad_cabezas'] ?? 0);
+        $inversion       = (float)($_POST['inversion_inicial'] ?? 0);
+        $peso            = $_POST['peso_promedio_kg']       ?: null;
+        $fecha           = $_POST['fecha_ingreso']          ?? null;
+        $observaciones   = trim($_POST['observaciones']     ?? '');
 
-        $alertas = $lote->validar();
-        if (!empty($alertas['error'])) {
-            echo json_encode(['codigo' => 0, 'mensaje' => implode(', ', $alertas['error'])]);
+        if (!$finca_id || !$nombre || !$cantidad || !$fecha) {
+            echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
             exit;
         }
 
-        $resultado = $lote->crear();
+        $db   = \Model\ActiveRecord::getDB();
+        $stmt = $db->prepare("
+        INSERT INTO lotes 
+            (finca_id, nombre, tipo, etapa, cantidad_cabezas, cantidad_actual,
+             inversion_inicial, peso_promedio_kg, fecha_ingreso, observaciones)
+        VALUES (?, ?, ?, 'cría', ?, ?, ?, ?, ?, ?)
+    ");
+
+        $stmt->execute([
+            $finca_id,
+            $nombre,
+            $tipo,
+            $cantidad,
+            $cantidad,
+            $inversion,
+            $peso,
+            $fecha,
+            $observaciones
+        ]);
+
         echo json_encode([
-            'codigo'  => $resultado['resultado'] ? 1 : 0,
-            'mensaje' => $resultado['resultado'] ? 'Lote registrado correctamente' : 'Error al registrar',
-            'id'      => $resultado['id'] ?? null
+            'codigo'  => 1,
+            'mensaje' => 'Lote registrado correctamente',
+            'id'      => $db->lastInsertId()
         ]);
     }
 
@@ -67,59 +82,59 @@ class LotesController
             exit;
         }
 
-        $lote->sincronizar([
-            'nombre'           => trim($_POST['nombre']            ?? $lote->nombre),
-            'tipo'             => $_POST['tipo']                   ?? $lote->tipo,
-            'etapa'            => $_POST['etapa']                  ?? $lote->etapa,
-            'cantidad_cabezas' => (int)($_POST['cantidad_cabezas'] ?? $lote->cantidad_cabezas),
-            'peso_promedio_kg' => $_POST['peso_promedio_kg']       ?? $lote->peso_promedio_kg,
-            'fecha_ingreso'    => $_POST['fecha_ingreso']          ?? $lote->fecha_ingreso,
-            'observaciones'    => trim($_POST['observaciones']     ?? $lote->observaciones)
+        $db   = \Model\ActiveRecord::getDB();
+        $stmt = $db->prepare("
+        UPDATE lotes SET
+            nombre            = ?,
+            tipo              = ?,
+            cantidad_cabezas  = ?,
+            cantidad_actual   = ?,
+            inversion_inicial = ?,
+            peso_promedio_kg  = ?,
+            fecha_ingreso     = ?,
+            observaciones     = ?
+        WHERE id = ?
+    ");
+
+        $stmt->execute([
+            trim($_POST['nombre']               ?? $lote->nombre),
+            $_POST['tipo']                      ?? $lote->tipo,
+            (int)($_POST['cantidad_cabezas']    ?? $lote->cantidad_cabezas),
+            (int)($_POST['cantidad_cabezas']    ?? $lote->cantidad_cabezas),
+            (float)($_POST['inversion_inicial'] ?? $lote->inversion_inicial),
+            $_POST['peso_promedio_kg']          ?: null,
+            $_POST['fecha_ingreso']             ?? $lote->fecha_ingreso,
+            trim($_POST['observaciones']        ?? ''),
+            $id
         ]);
 
-        $alertas = $lote->validar();
-        if (!empty($alertas['error'])) {
-            echo json_encode(['codigo' => 0, 'mensaje' => implode(', ', $alertas['error'])]);
-            exit;
-        }
-
-        $resultado = $lote->actualizar();
-        echo json_encode([
-            'codigo'  => $resultado['resultado'] ? 1 : 0,
-            'mensaje' => $resultado['resultado'] ? 'Lote actualizado' : 'Error al actualizar'
-        ]);
+        echo json_encode(['codigo' => 1, 'mensaje' => 'Lote actualizado correctamente']);
     }
 
     public static function venderAPI(Router $router): void
     {
         getHeadersApi();
 
-        $id    = (int)($_POST['id']    ?? 0);
+        $id     = (int)($_POST['id']                  ?? 0);
         $precio = (float)($_POST['precio_venta_total'] ?? 0);
-        $fecha  = $_POST['fecha_venta'] ?? date('Y-m-d');
+        $fecha  = $_POST['fecha_venta']                ?? date('Y-m-d');
 
         if (!$id || $precio <= 0) {
             echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
             exit;
         }
 
-        $lote = Lotes::find($id);
-        if (!$lote) {
-            echo json_encode(['codigo' => 0, 'mensaje' => 'Lote no encontrado']);
-            exit;
-        }
+        $db   = \Model\ActiveRecord::getDB();
+        $stmt = $db->prepare("
+        UPDATE lotes SET
+            etapa              = 'vendido',
+            fecha_venta        = ?,
+            precio_venta_total = ?
+        WHERE id = ?
+    ");
+        $stmt->execute([$fecha, $precio, $id]);
 
-        $lote->sincronizar([
-            'etapa'              => 'vendido',
-            'fecha_venta'        => $fecha,
-            'precio_venta_total' => $precio
-        ]);
-
-        $resultado = $lote->actualizar();
-        echo json_encode([
-            'codigo'  => $resultado['resultado'] ? 1 : 0,
-            'mensaje' => $resultado['resultado'] ? 'Lote marcado como vendido' : 'Error al actualizar'
-        ]);
+        echo json_encode(['codigo' => 1, 'mensaje' => 'Lote marcado como vendido']);
     }
 
     public static function eliminarAPI(Router $router): void

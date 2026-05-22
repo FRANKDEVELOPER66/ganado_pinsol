@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="build/js/app.js"></script>
     <link rel="shortcut icon" href="<?= asset('images/pinsol_.png') ?>" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <link rel="stylesheet" href="<?= asset('build/styles.css') ?>">
     <title>Ganadería Pineda Solares</title>
 </head>
@@ -62,7 +66,7 @@
         <div class="row justify-content-center text-center">
             <div class="col-12">
                 <p style="font-size:xx-small; font-weight: bold;">
-                    Comando de Informática y Tecnología, <?= date('Y') ?> &copy;
+                    Frankd Development, <?= date('Y') ?> &copy;
                 </p>
             </div>
         </div>

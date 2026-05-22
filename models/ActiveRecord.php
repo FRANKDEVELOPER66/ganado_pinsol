@@ -23,6 +23,11 @@ class ActiveRecord
         self::$db = $database;
     }
 
+    public static function getDB()
+    {
+        return self::$db;
+    }
+
     public static function setAlerta($tipo, $mensaje)
     {
         static::$alertas[$tipo][] = $mensaje;

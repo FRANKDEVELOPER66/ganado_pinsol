@@ -90,7 +90,7 @@ $base = $_ENV['APP_NAME'] ? '/' . $_ENV['APP_NAME'] : '';
     }
 
     .prop-card-nombre {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
         font-weight: 700;
         color: var(--ps-crema);
         margin-bottom: .5rem;
@@ -200,6 +200,27 @@ $base = $_ENV['APP_NAME'] ? '/' . $_ENV['APP_NAME'] : '';
     .swal2-popup input::placeholder {
         color: #827553ff !important;
         opacity: 1;
+    }
+
+    .card-pinsol {
+        background: linear-gradient(160deg, #2a1f0e, #1c1208) !important;
+        border: 1px solid var(--ps-cafe) !important;
+        border-top: 4px solid var(--ps-vino) !important;
+        border-radius: 14px !important;
+        color: var(--ps-crema) !important;
+    }
+
+    .card-pinsol:hover {
+        border-color: var(--ps-dorado) !important;
+        border-top-color: var(--ps-dorado) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(201, 168, 76, .2);
+    }
+
+    .card-title {
+        color: var(--ps-crema) !important;
+        font-size: 1.3rem !important;
+        font-weight: 700 !important;
     }
 </style>
 

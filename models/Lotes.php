@@ -13,6 +13,7 @@ class Lotes extends ActiveRecord
         'etapa',
         'cantidad_cabezas',
         'cantidad_actual',
+        'inversion_inicial',
         'peso_promedio_kg',
         'fecha_ingreso',
         'observaciones'
@@ -25,23 +26,23 @@ class Lotes extends ActiveRecord
     public $etapa;
     public $cantidad_cabezas;
     public $cantidad_actual;
+    public $inversion_inicial = 0;
     public $peso_promedio_kg;
     public $fecha_ingreso;
     public $observaciones;
 
     public function __construct($args = [])
     {
-        $this->finca_id           = $args['finca_id']           ?? null;
-        $this->nombre             = $args['nombre']             ?? '';
-        $this->tipo               = $args['tipo']               ?? 'bovino';
-        $this->etapa              = $args['etapa']              ?? 'cría';
-        $this->cantidad_cabezas   = $args['cantidad_cabezas']   ?? 0;
-        $this->cantidad_actual    = $args['cantidad_actual']    ?? 0;
-        $this->peso_promedio_kg   = $args['peso_promedio_kg']   ?? null;
-        $this->fecha_ingreso      = $args['fecha_ingreso']      ?? null;
-        $this->fecha_venta        = $args['fecha_venta']        ?? null;
-        $this->precio_venta_total = $args['precio_venta_total'] ?? null;
-        $this->observaciones      = $args['observaciones']      ?? null;
+        $this->finca_id          = $args['finca_id']          ?? null;
+        $this->nombre            = $args['nombre']            ?? '';
+        $this->tipo              = $args['tipo']              ?? 'bovino';
+        $this->etapa             = $args['etapa']             ?? 'cría';
+        $this->cantidad_cabezas  = $args['cantidad_cabezas']  ?? 0;
+        $this->cantidad_actual   = $args['cantidad_actual']   ?? 0;
+        $this->inversion_inicial = $args['inversion_inicial'] ?? 0;
+        $this->peso_promedio_kg  = $args['peso_promedio_kg']  ?? null;
+        $this->fecha_ingreso     = $args['fecha_ingreso']     ?? null;
+        $this->observaciones     = $args['observaciones']     ?? null;
     }
 
     public static function porFinca(int $finca_id): array
@@ -62,7 +63,6 @@ class Lotes extends ActiveRecord
     public function validar(): array
     {
         static::$alertas = [];
-
         if (!$this->nombre) {
             static::$alertas['error'][] = 'El nombre del lote es obligatorio';
         }
@@ -75,7 +75,6 @@ class Lotes extends ActiveRecord
         if (!$this->fecha_ingreso) {
             static::$alertas['error'][] = 'La fecha de ingreso es obligatoria';
         }
-
         return static::$alertas;
     }
 }

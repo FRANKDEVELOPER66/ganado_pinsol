@@ -7,6 +7,7 @@ use Controllers\AppController;
 use Controllers\FincasController;
 use Controllers\GastosController;
 use Controllers\LotesController;
+use Controllers\PrestamosController;
 use Controllers\PropietariosController;
 
 $router = new Router();
@@ -39,6 +40,11 @@ $router->post('/API/lotes/eliminar',   [LotesController::class, 'eliminarAPI']);
 $router->get('/API/gastos/listar',    [GastosController::class, 'listarAPI']);
 $router->post('/API/gastos/crear',    [GastosController::class, 'crearAPI']);
 $router->post('/API/gastos/eliminar', [GastosController::class, 'eliminarAPI']);
+
+// ── PRÉSTAMOS ─────────────────────────────────────────────────────────────────
+$router->get('/API/prestamos/listar',    [PrestamosController::class, 'listarAPI']);
+$router->post('/API/prestamos/crear',    [PrestamosController::class, 'crearAPI']);
+$router->post('/API/prestamos/eliminar', [PrestamosController::class, 'eliminarAPI']);
 
 
 

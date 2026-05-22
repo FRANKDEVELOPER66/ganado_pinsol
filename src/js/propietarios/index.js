@@ -31,18 +31,18 @@ const renderPropietarios = (lista) => {
     }
 
     grid.innerHTML = lista.map(p => `
-        <div class="card-pinsol">
-            <div class="card-title">
-                <i class="bi bi-person-fill"></i> ${p.nombre}
-            </div>
-            <div style="font-size:.88rem;margin-bottom:.5rem;">
-                <i class="bi bi-telephone" style="color:var(--ps-dorado);"></i>
-                ${p.telefono || '<span style="opacity:.5;">Sin teléfono</span>'}
-            </div>
-            <div style="font-size:.88rem;margin-bottom:1rem;">
-                <i class="bi bi-geo-alt" style="color:var(--ps-dorado);"></i>
-                ${p.direccion || '<span style="opacity:.5;">Sin dirección</span>'}
-            </div>
+        <div class="prop-card">
+    <div class="prop-card-nombre">
+        <i class="bi bi-person-fill" style="color:var(--ps-dorado);"></i> ${p.nombre}
+    </div>
+    <div class="prop-card-info" style="font-size:1rem;">
+        <i class="bi bi-telephone"></i>
+        ${p.telefono || '<span style="opacity:.5;">Sin teléfono</span>'}
+    </div>
+    <div class="prop-card-info" style="font-size:1rem;">
+        <i class="bi bi-geo-alt"></i>
+        ${p.direccion || '<span style="opacity:.5;">Sin dirección</span>'}
+    </div>
             <div style="font-size:.82rem;margin-bottom:1rem;">
                 <span style="
                     background:var(--ps-verde);

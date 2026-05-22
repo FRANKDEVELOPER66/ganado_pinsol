@@ -9,22 +9,19 @@ class Fincas extends ActiveRecord
     protected static $columnasDB = [
         'propietario_id',
         'nombre',
-        'ubicacion',
-        'inversion_inicial'
+        'ubicacion'
     ];
 
     public $id;
     public $propietario_id;
     public $nombre;
     public $ubicacion;
-    public $inversion_inicial;
 
     public function __construct($args = [])
     {
         $this->propietario_id    = $args['propietario_id']    ?? null;
         $this->nombre            = $args['nombre']            ?? '';
         $this->ubicacion         = $args['ubicacion']         ?? '';
-        $this->inversion_inicial = $args['inversion_inicial'] ?? 0;
     }
 
     public static function porPropietario(int $propietario_id): array
@@ -33,7 +30,7 @@ class Fincas extends ActiveRecord
             SELECT f.*,
                    p.nombre as propietario_nombre,
                    COUNT(l.id) as total_lotes,
-                   COALESCE(SUM(l.cantidad_actual), 0) as total_cabezas,
+                   COALESCE(SUM(CASE WHEN l.etapa != 'vendido' THEN l.cantidad_actual ELSE 0 END), 0) as total_cabezas,
                    COALESCE(SUM(g.monto), 0) as total_gastos
             FROM fincas f
             JOIN propietarios p ON p.id = f.propietario_id
@@ -55,10 +52,6 @@ class Fincas extends ActiveRecord
 
         if (!$this->propietario_id) {
             static::$alertas['error'][] = 'El propietario es obligatorio';
-        }
-
-        if ($this->inversion_inicial < 0) {
-            static::$alertas['error'][] = 'La inversión no puede ser negativa';
         }
 
         return static::$alertas;

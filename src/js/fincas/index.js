@@ -611,11 +611,6 @@ ${!esVendido && !esInactivo ? 'background:rgba(76,175,125,.2);color:#4CAF7D;bord
     onclick="verLiquidacionLote(${l.id}, '${l.nombre}')">
     <i class="bi bi-graph-up-arrow"></i> Ver liquidación
 </button>` : ''}
-
-${esVendido ? `
-<button class="btn-lote danger" onclick="desactivarLote(${l.id}, '${l.nombre}')">
-    <i class="bi bi-archive"></i>
-</button>` : ''}
             </div>
 
             ${!esVendido && !esInactivo ? `

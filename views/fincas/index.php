@@ -326,7 +326,6 @@ $base = $_ENV['APP_NAME'] ? '/' . $_ENV['APP_NAME'] : '';
                 <th>Ubicación</th>
                 <th>Lotes</th>
                 <th>Cabezas</th>
-                <th>Gastos</th>
                 <th>Funciones</th>
             </tr>
         </thead>

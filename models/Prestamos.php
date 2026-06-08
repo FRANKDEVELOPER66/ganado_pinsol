@@ -12,7 +12,8 @@ class Prestamos extends ActiveRecord
         'propietario_nombre',
         'descripcion',
         'monto',
-        'fecha'
+        'fecha',
+        'saldado'   // ✅ agregar
     ];
 
     public $id;
@@ -22,6 +23,7 @@ class Prestamos extends ActiveRecord
     public $descripcion;
     public $monto;
     public $fecha;
+    public $saldado = 0;
 
     public function __construct($args = [])
     {
@@ -31,6 +33,7 @@ class Prestamos extends ActiveRecord
         $this->descripcion         = $args['descripcion']         ?? '';
         $this->monto               = $args['monto']               ?? 0;
         $this->fecha               = $args['fecha']               ?? null;
+        $this->saldado             = $args['saldado']             ?? 0; // ✅ agregar
     }
 
     public static function porFinca(int $finca_id): array

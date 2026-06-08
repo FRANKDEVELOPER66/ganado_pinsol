@@ -48,19 +48,19 @@ let dt = null;
 
 const iniciarDataTable = () => {
     if ($.fn.DataTable.isDataTable('#tablaFincas')) {
-        $('#tablaFincas').DataTable().clear().destroy();
+        $('#tablaFincas').DataTable().destroy();
     }
-    setTimeout(() => {
-        dt = $('#tablaFincas').DataTable({
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
-            },
-            pageLength: 10,
-            responsive: true,
-            columnDefs: [{ orderable: false, targets: 6 }],
-            destroy: true
-        });
-    }, 50);
+
+    // ✅ Sin setTimeout, y con el tbody ya lleno
+    dt = $('#tablaFincas').DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+        },
+        pageLength: 10,
+        responsive: true,
+        columnDefs: [{ orderable: false, targets: 5 }], // ✅ Era targets:6, ahora es 5 (6 columnas, índice 0-5)
+        destroy: true
+    });
 };
 
 // ── RENDER FINCAS ─────────────────────────────────────────────────────────────
@@ -102,11 +102,6 @@ const renderFincas = (lista) => {
          style="width:35px;height:35px;object-fit:contain;filter:sepia(1) saturate(3) hue-rotate(5deg);">
     ${f.total_cabezas}
 </span>
-            </td>
-            <td>
-                <span style="color:#E74C3C;font-weight:700;font-size:1.05rem;">
-                    ${quetzales(f.total_gastos)}
-                </span>
             </td>
             <td style="text-align:center;">
     <button class="btn-func editar" onclick="editarFinca(${f.id})">
@@ -284,16 +279,32 @@ window.verLotes = async (fincaId, fincaNombre) => {
                 </div>
 
                 <div id="tabLotes">
-                    <div style="display:flex;justify-content:flex-end;margin-bottom:1rem;">
-                        <button class="btn-nueva-finca" onclick="mostrarFormLote()">
-                            <i class="bi bi-plus-circle-fill"></i> Nuevo Lote
-                        </button>
-                    </div>
-                    <div id="lotesGrid" style="
-                        display:grid;
-                        grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-                        gap:1rem;"></div>
-                </div>
+    <!-- Filtros -->
+<div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+    <button class="btn-filtro-lote active" id="filtroActivo"
+        onclick="cambiarFiltroLote('activo')"
+        style="background:rgba(76,175,125,.2);border:1px solid #4CAF7D;
+        color:#4CAF7D;border-radius:20px;padding:.3rem .9rem;
+        font-size:.78rem;font-weight:700;cursor:pointer;">
+        🐄 Activos
+    </button>
+    <button class="btn-filtro-lote" id="filtroHistorial"
+        onclick="cambiarFiltroLote('historial')"
+        style="background:rgba(149,165,166,.2);border:1px solid #95A5A6;
+        color:#95A5A6;border-radius:20px;padding:.3rem .9rem;
+        font-size:.78rem;font-weight:700;cursor:pointer;opacity:.6;">
+        📦 Historial
+    </button>
+    <div style="flex:1;"></div>
+    <button class="btn-nueva-finca" onclick="mostrarFormLote()">
+        <i class="bi bi-plus-circle-fill"></i> Nuevo Lote
+    </button>
+</div>
+    <div id="lotesGrid" style="
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+        gap:1.25rem;"></div>
+</div>
 
                 <div id="tabGastos" style="display:none;">
                     <div style="display:flex;justify-content:space-between;
@@ -384,6 +395,21 @@ window.verLotes = async (fincaId, fincaNombre) => {
     await cargarLotes();
 };
 
+
+window.cambiarFiltroLote = (filtro) => {
+    document.querySelectorAll('.btn-filtro-lote').forEach(b => {
+        b.style.opacity = '.6';
+    });
+    const btnMap = {
+        'activo': 'filtroActivo',
+        'historial': 'filtroHistorial'  // ✅ ya no existe filtroVendido
+    };
+    const btn = document.getElementById(btnMap[filtro]);
+    if (btn) btn.style.opacity = '1';
+
+    cargarLotes(filtro);
+};
+
 window.cerrarModalLotes = () => {
     document.getElementById('modalLotes').style.display = 'none';
     document.body.style.overflow = '';
@@ -398,27 +424,26 @@ window.cerrarModalLotes = () => {
                     tabla.row.add([
                         i + 1,
                         `<div style="font-weight:700;color:var(--ps-crema);">
-                            <i class="bi bi-tree-fill" style="color:var(--ps-verde);margin-right:.3rem;"></i>
-                            ${f.nombre}
-                        </div>`,
+        <i class="bi bi-tree-fill" style="color:var(--ps-verde);margin-right:.3rem;"></i>
+        ${f.nombre}
+    </div>`,
                         `<span style="color:#a08060;">
-                            <i class="bi bi-geo-alt" style="color:var(--ps-dorado);"></i>
-                            ${f.ubicacion || '—'}
-                        </span>`,
+        <i class="bi bi-geo-alt" style="color:var(--ps-dorado);"></i>
+        ${f.ubicacion || '—'}
+    </span>`,
                         `<span class="badge-stat"><i class="bi bi-grid-3x3-gap"></i> ${f.total_lotes}</span>`,
                         `<span class="badge-stat"><img src="/ganado_pinsol/public/images/toro.png" style="width:35px;height:35px;object-fit:contain;filter:sepia(1) saturate(3) hue-rotate(5deg);"> ${f.total_cabezas}</span>`,
-                        `<span style="color:#E74C3C;font-weight:700;font-size:1.05rem;">${quetzales(f.total_gastos)}</span>`,
                         `<div style="text-align:center;">
-    <button class="btn-func editar" onclick="editarFinca(${f.id})">
-        <i class="bi bi-pencil-square"></i> Editar
-    </button>
-    <button class="btn-func lotes" onclick="verLotes(${f.id}, '${f.nombre}')">
-        <i class="bi bi-sliders"></i> Gestionar
-    </button>
-    <button class="btn-func eliminar" onclick="eliminarFinca(${f.id}, '${f.nombre}')">
-        <i class="bi bi-trash3"></i>
-    </button>
-</div>`
+        <button class="btn-func editar" onclick="editarFinca(${f.id})">
+            <i class="bi bi-pencil-square"></i> Editar
+        </button>
+        <button class="btn-func lotes" onclick="verLotes(${f.id}, '${f.nombre}')">
+            <i class="bi bi-sliders"></i> Gestionar
+        </button>
+        <button class="btn-func eliminar" onclick="eliminarFinca(${f.id}, '${f.nombre}')">
+            <i class="bi bi-trash3"></i>
+        </button>
+    </div>`
                     ]);
                 });
                 tabla.draw();
@@ -445,86 +470,161 @@ window.cambiarTab = (tab) => {
 };
 
 // ── LOTES ─────────────────────────────────────────────────────────────────────
-const cargarLotes = async () => {
+const cargarLotes = async (filtro = 'activo') => {
     const grid = document.getElementById('lotesGrid');
     grid.innerHTML = `<div style="text-align:center;padding:2rem;color:#7c6a3a;grid-column:1/-1;">
         <i class="bi bi-hourglass-split" style="font-size:1.5rem;opacity:.3;display:block;margin-bottom:.5rem;"></i>
         Cargando lotes...</div>`;
     try {
-        const r = await fetch(`${BASE}/API/lotes/listar?finca_id=${FINCA_ACTIVA.id}`);
-        const d = await r.json();
-        if (d.codigo === 1) {
-            renderLotes(d.datos);
+        // ✅ Cargar lotes Y préstamos juntos
+        const [rLotes, rPrest] = await Promise.all([
+            fetch(`${BASE}/API/lotes/listar?finca_id=${FINCA_ACTIVA.id}`),
+            fetch(`${BASE}/API/prestamos/listar?finca_id=${FINCA_ACTIVA.id}`)
+        ]);
+        const dLotes = await rLotes.json();
+        const dPrest = await rPrest.json();
+
+        if (dLotes.codigo === 1) {
+            const prestamos = dPrest.codigo === 1 ? dPrest.datos : [];
+            const filtrados = dLotes.datos.filter(l => {
+                if (filtro === 'activo') return l.situacion === 'activo';
+                if (filtro === 'historial') return l.situacion === 'vendido' || l.situacion === 'inactivo'; // ✅
+                return true;
+            });
+            renderLotes(filtrados, filtro, prestamos);
         }
     } catch (e) {
         Toast.fire({ icon: 'error', title: e.message });
     }
 };
 
-const renderLotes = (lista) => {
+const renderLotes = (lista, filtro = 'activo', prestamos = []) => {
     const grid = document.getElementById('lotesGrid');
+
     if (!lista.length) {
-        grid.innerHTML = `<div style="text-align:center;padding:2rem;color:#7c6a3a;grid-column:1/-1;">
+        const mensajes = {
+            'activo': 'No hay lotes activos',
+            'historial': 'No hay lotes en historial'  // ✅
+        };
+        grid.innerHTML = `
+        <div style="text-align:center;padding:2rem;color:#7c6a3a;grid-column:1/-1;">
             <i class="bi bi-grid-3x3-gap" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.5rem;"></i>
-            No hay lotes registrados</div>`;
+            ${mensajes[filtro] || 'No hay lotes'}
+        </div>`;
         return;
     }
 
     grid.innerHTML = lista.map(l => {
-        const vendido = l.etapa === 'vendido';
+        const esVendido = l.situacion === 'vendido';
+        const esInactivo = l.situacion === 'inactivo';
+        const fueVendido = esInactivo && parseFloat(l.precio_venta_total) > 0;
+
+        // ✅ Préstamos no saldados de este lote
+        const prestamosLote = prestamos.filter(p =>
+            p.lote_id == l.id && p.saldado != 1
+        );
+        const totalPrestamosLote = prestamosLote.reduce((s, p) => s + parseFloat(p.monto), 0);
 
         return `
-    <div class="lote-card">
-        <div style="font-size:1.4rem;font-weight:700;color:var(--ps-crema);margin-bottom:.5rem;">
-            ${vendido ? `<i class="bi bi-check-circle-fill" style="color:#4CAF7D;margin-right:.3rem;"></i>` : ''}
-            ${l.nombre}
-        </div>
-        <div style="font-size:1.2rem;color:#a08060;margin-bottom:.3rem;">
-            <i class="bi bi-collection" style="color:var(--ps-dorado);"></i>
-            ${l.cantidad_actual} / ${l.cantidad_cabezas} cabezas
-        </div>
-        <div style="font-size:1.2rem;color:#a08060;margin-bottom:.3rem;">
-            <i class="bi bi-cash-stack" style="color:var(--ps-dorado);"></i>
-            Inversión: ${quetzales(l.inversion_inicial)}
-        </div>
-        <div style="font-size:1.2rem;color:#a08060;margin-bottom:.3rem;">
-            <i class="bi bi-calendar" style="color:var(--ps-dorado);"></i>
-            Ingreso: ${l.fecha_ingreso ?? '—'}
-        </div>
-        <div style="font-size:1.2rem;color:#a08060;margin-bottom:.5rem;">
-            <i class="bi bi-cash" style="color:var(--ps-dorado);"></i>
-            Gastos: ${quetzales(l.total_gastos)}
-        </div>
-        ${vendido ? `
-        <div style="font-size:1.25rem;color:#4CAF7D;margin-bottom:.5rem;font-weight:700;">
-            <i class="bi bi-check-circle-fill"></i>
-            Vendido: ${quetzales(l.precio_venta_total)}
-        </div>` : ''}
-        ${vendido ? `
-        <button class="btn-vender-grande" 
-            style="background:linear-gradient(135deg,#6a0dad,#4a0080);border-color:#9B59B6;"
-            onclick="verLiquidacionLote(${l.id}, '${l.nombre}')">
-            <i class="bi bi-calculator"></i> VER LIQUIDACIÓN
-        </button>` : `
-        <div style="display:flex;gap:.5rem;margin-bottom:.5rem;">
-            <button class="btn-lote" onclick="editarLote(${l.id})">
-                <i class="bi bi-pencil-square"></i> Editar
-            </button>
-            <button class="btn-lote" style="border-color:#E8A020;color:#E8A020;"
-                onclick="verGastosLote(${l.id}, '${l.nombre}')">
-                <i class="bi bi-cash-stack"></i> Gastos
-            </button>
-            <button class="btn-lote danger" onclick="eliminarLote(${l.id}, '${l.nombre}')">
-                <i class="bi bi-trash3"></i>
-            </button>
-        </div>
-        <button class="btn-vender-grande" onclick="iniciarFlujoVenta(${l.id}, '${l.nombre}')">
-            <i class="bi bi-currency-dollar"></i> VENDER ESTE LOTE
-        </button>`}
-    </div>`;
+        <div class="lote-card">
+
+            <!-- Nombre y estado -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">
+                <div style="font-size:1rem;font-weight:700;color:var(--ps-crema);">
+                    ${esVendido ? '<i class="bi bi-check-circle-fill" style="color:#4CAF7D;margin-right:.3rem;"></i>' : ''}
+                    ${esInactivo ? '<i class="bi bi-archive-fill" style="color:#95A5A6;margin-right:.3rem;"></i>' : ''}
+                    ${l.nombre}
+                </div>
+                <span style="font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:10px;
+                    ${(esVendido || fueVendido) ? 'background:rgba(155,89,182,.2);color:#9B59B6;border:1px solid #9B59B6;' : ''}
+${esInactivo && !fueVendido ? 'background:rgba(149,165,166,.2);color:#95A5A6;border:1px solid #95A5A6;' : ''}
+${!esVendido && !esInactivo ? 'background:rgba(76,175,125,.2);color:#4CAF7D;border:1px solid #4CAF7D;' : ''}
+                </span>
+            </div>
+
+            <!-- Datos principales -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.75rem;">
+                <div style="font-size:.8rem;color:#a08060;">
+                    <i class="bi bi-collection" style="color:var(--ps-dorado);"></i>
+                    ${l.cantidad_actual} / ${l.cantidad_cabezas} cabezas
+                </div>
+                <div style="font-size:.8rem;color:#a08060;">
+                    <i class="bi bi-cash-stack" style="color:var(--ps-dorado);"></i>
+                    ${quetzales(l.inversion_inicial)}
+                </div>
+                <div style="font-size:.8rem;color:#a08060;">
+                    <i class="bi bi-calendar" style="color:var(--ps-dorado);"></i>
+                    ${l.fecha_ingreso ?? '—'}
+                </div>
+                <div style="font-size:.8rem;color:#E74C3C;font-weight:600;">
+                    <i class="bi bi-receipt" style="color:#E74C3C;"></i>
+                    Gastos: ${quetzales(l.total_gastos)}
+                </div>
+            </div>
+
+            ${l.total_bajas > 0 ? `
+            <div style="font-size:.8rem;color:#E74C3C;margin-bottom:.5rem;">
+                <i class="bi bi-heartbreak-fill"></i>
+                Bajas registradas: ${l.total_bajas} animales
+            </div>` : ''}
+
+            ${/* ✅ Préstamos pendientes del lote */''}
+            ${totalPrestamosLote > 0 && !esVendido && !esInactivo ? `
+            <div style="font-size:.8rem;color:#E8A020;margin-bottom:.5rem;
+                background:rgba(232,160,32,.1);border:1px solid rgba(232,160,32,.3);
+                border-radius:6px;padding:.4rem .7rem;">
+                <i class="bi bi-cash-coin"></i>
+                Préstamo pendiente: <strong>${quetzales(totalPrestamosLote)}</strong>
+            </div>` : ''}
+
+            ${esVendido ? `
+            <div style="font-size:.85rem;color:#4CAF7D;margin-bottom:.75rem;font-weight:700;
+                background:rgba(76,175,125,.1);border:1px solid rgba(76,175,125,.3);
+                border-radius:8px;padding:.5rem;">
+                <i class="bi bi-currency-dollar"></i>
+                Precio venta: ${quetzales(l.precio_venta_total)}
+                ${l.fecha_venta ? `<span style="font-size:.72rem;color:#7c6a3a;margin-left:.5rem;">${l.fecha_venta}</span>` : ''}
+            </div>` : ''}
+
+            <!-- Botones -->
+            <div style="display:flex;gap:.35rem;flex-wrap:wrap;">
+                ${!esInactivo && !esVendido ? `
+                <button class="btn-lote" onclick="editarLote(${l.id})">
+                    <i class="bi bi-pencil-square"></i> Editar
+                </button>` : ''}
+
+                ${!esVendido && !esInactivo ? `
+                <button class="btn-lote"
+                    style="border-color:#E74C3C;color:#E74C3C;"
+                    onclick="mostrarFormBaja(${l.id}, '${l.nombre}', ${l.cantidad_actual})">
+                    <i class="bi bi-heartbreak"></i> Baja
+                </button>
+                <button class="btn-lote"
+                    style="border-color:#3498DB;color:#3498DB;"
+                    onclick="mostrarGastosLote(${l.id}, '${l.nombre}')">
+                    <i class="bi bi-receipt"></i> Gastos
+                </button>` : ''}
+
+                ${(esVendido || fueVendido) ? `
+<button class="btn-lote"
+    style="border-color:#9B59B6;color:#9B59B6;flex:1;"
+    onclick="verLiquidacionLote(${l.id}, '${l.nombre}')">
+    <i class="bi bi-graph-up-arrow"></i> Ver liquidación
+</button>` : ''}
+
+${esVendido ? `
+<button class="btn-lote danger" onclick="desactivarLote(${l.id}, '${l.nombre}')">
+    <i class="bi bi-archive"></i>
+</button>` : ''}
+            </div>
+
+            ${!esVendido && !esInactivo ? `
+            <button class="btn-vender-grande" onclick="iniciarFlujoVenta(${l.id}, '${l.nombre}')">
+                <i class="bi bi-currency-dollar"></i> VENDER ESTE LOTE
+            </button>` : ''}
+        </div>`;
     }).join('');
 };
-
 
 window.verLiquidacionLote = async (loteId, loteNombre) => {
     try {
@@ -539,7 +639,9 @@ window.verLiquidacionLote = async (loteId, loteNombre) => {
 
         const lote = dLotes.datos.find(l => l.id == loteId);
         const gastosLote = dGastos.datos.filter(g => g.lote_id == loteId);
-        const prestamosLote = dPrest.datos.filter(p => p.lote_id == loteId || !p.lote_id);
+        const prestamosLote = dPrest.datos.filter(p =>
+            (p.lote_id == loteId || !p.lote_id) && p.saldado != 1
+        );
 
         const inversion = parseFloat(lote.inversion_inicial || 0);
         const totalGastos = gastosLote.reduce((s, g) => s + parseFloat(g.monto), 0);
@@ -902,7 +1004,9 @@ window.iniciarFlujoVenta = async (loteId, loteNombre) => {
 
         const lote = dLotes.datos.find(l => l.id == loteId);
         const gastosLote = dGastos.datos.filter(g => g.lote_id == loteId);
-        const prestamosLote = dPrest.datos.filter(p => p.lote_id == loteId || !p.lote_id);
+        const prestamosLote = dPrest.datos.filter(p =>
+            (p.lote_id == loteId || !p.lote_id) && p.saldado != 1
+        );
 
         const inversion = parseFloat(lote.inversion_inicial || 0);
         const totalGastos = gastosLote.reduce((s, g) => s + parseFloat(g.monto), 0);
@@ -1684,6 +1788,594 @@ window.mostrarFormPrestamo = async () => {
     } catch (e) { Toast.fire({ icon: 'error', title: e.message }); }
 };
 
+
+
+window.imprimirLiquidacion = async (loteId) => {
+    try {
+        const [rLotes, rGastos, rPrest] = await Promise.all([
+            fetch(`${BASE}/API/lotes/listar?finca_id=${FINCA_ACTIVA.id}`),
+            fetch(`${BASE}/API/gastos/listar?finca_id=${FINCA_ACTIVA.id}`),
+            fetch(`${BASE}/API/prestamos/listar?finca_id=${FINCA_ACTIVA.id}`)
+        ]);
+        const dLotes = await rLotes.json();
+        const dGastos = await rGastos.json();
+        const dPrest = await rPrest.json();
+
+        const lote = dLotes.datos.find(l => l.id == loteId);
+        const gastosLote = dGastos.datos.filter(g => g.lote_id == loteId);
+        const prestamosLote = dPrest.datos.filter(p =>
+            (p.lote_id == loteId || !p.lote_id) && p.saldado == 1
+        );
+
+        const inversion = parseFloat(lote.inversion_inicial || 0);
+        const totalGastos = gastosLote.reduce((s, g) => s + parseFloat(g.monto), 0);
+        const totalPrestamos = prestamosLote.reduce((s, p) => s + parseFloat(p.monto), 0);
+        const precioVenta = parseFloat(lote.precio_venta_total || 0);
+        const ganancia = precioVenta - inversion - totalGastos;
+        const mitad = ganancia / 2;
+        const pagoFinca = mitad - totalPrestamos;
+        const pagoGanado = inversion + totalGastos + totalPrestamos + mitad;
+
+        const gastosPorCat = {};
+        gastosLote.forEach(g => {
+            if (!gastosPorCat[g.categoria]) gastosPorCat[g.categoria] = 0;
+            gastosPorCat[g.categoria] += parseFloat(g.monto);
+        });
+
+        const fechaHoy = new Date().toLocaleDateString('es-GT');
+
+        const ventana = window.open('', '_blank');
+        ventana.document.write(`
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Liquidación — ${lote.nombre}</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #fff;
+            color: #1a1a1a;
+            padding: 2rem;
+            font-size: 14px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #8B6914;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .header h1 {
+            font-size: 1.6rem;
+            color: #5C3A1E;
+            margin-bottom: .25rem;
+        }
+        .header p { color: #7c6a3a; font-size: .85rem; }
+        .empresa { font-size: 1rem; font-weight: 700; color: #8B6914; margin-bottom: .25rem; }
+        
+        .seccion {
+            background: #fdf8f0;
+            border: 1px solid #d4b870;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .seccion h3 {
+            font-size: .8rem;
+            font-weight: 700;
+            color: #8B6914;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            border-bottom: 1px solid #d4b870;
+            padding-bottom: .4rem;
+            margin-bottom: .75rem;
+        }
+        .fila {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: .4rem;
+            font-size: .9rem;
+        }
+        .fila .label { color: #5c4a2a; }
+        .fila .valor { font-weight: 600; }
+        .fila .rojo { color: #c0392b; }
+        .fila .verde { color: #27ae60; }
+        .fila .dorado { color: #8B6914; }
+
+        .ganancia-box {
+            background: #5C3A1E;
+            color: #fff;
+            border-radius: 8px;
+            padding: .75rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .grid-pagos {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .pago-box {
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .pago-ganado {
+            background: #f0faf4;
+            border: 1px solid #27ae60;
+        }
+        .pago-finca {
+            background: #fdf8f0;
+            border: 1px solid #8B6914;
+        }
+        .pago-box h3 {
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(0,0,0,.1);
+            padding-bottom: .35rem;
+            margin-bottom: .6rem;
+        }
+        .pago-ganado h3 { color: #27ae60; }
+        .pago-finca h3 { color: #8B6914; }
+        .pago-total {
+            border-top: 2px solid rgba(0,0,0,.15);
+            margin-top: .5rem;
+            padding-top: .5rem;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .pago-ganado .pago-total { color: #27ae60; }
+        .pago-finca .pago-total { color: #8B6914; }
+
+        .footer {
+            text-align: center;
+            color: #a08060;
+            font-size: .75rem;
+            border-top: 1px solid #d4b870;
+            padding-top: .75rem;
+            margin-top: 1rem;
+        }
+
+        @media print {
+            body { padding: 1rem; }
+            button { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="empresa">🐄 Ganadería Pineda Solares</div>
+        <h1>Recibo de Liquidación</h1>
+        <p>
+            Finca: <strong>${FINCA_ACTIVA.nombre}</strong> &nbsp;·&nbsp;
+            Lote: <strong>${lote.nombre}</strong> &nbsp;·&nbsp;
+            Vendido: <strong>${lote.fecha_venta}</strong> &nbsp;·&nbsp;
+            Impreso: <strong>${fechaHoy}</strong>
+        </p>
+    </div>
+
+    <!-- Cuadre -->
+    <div class="seccion">
+        <h3>Cuadre de liquidación</h3>
+        <div class="fila">
+            <span class="label">Precio de venta</span>
+            <span class="valor verde">${quetzales(precioVenta)}</span>
+        </div>
+        <div class="fila">
+            <span class="label">(-) Inversión inicial</span>
+            <span class="valor rojo">- ${quetzales(inversion)}</span>
+        </div>
+        ${Object.entries(gastosPorCat).map(([cat, monto]) => {
+            const info = categoriaInfo[cat] || categoriaInfo['otro'];
+            return `<div class="fila">
+                <span class="label">(-) ${info.label}</span>
+                <span class="valor rojo">- ${quetzales(monto)}</span>
+            </div>`;
+        }).join('')}
+        ${totalPrestamos > 0 ? `
+        <div class="fila">
+            <span class="label">(-) Préstamos descontados</span>
+            <span class="valor rojo">- ${quetzales(totalPrestamos)}</span>
+        </div>` : ''}
+    </div>
+
+    <div class="ganancia-box">
+        <span>GANANCIA NETA</span>
+        <span>${quetzales(ganancia)}</span>
+    </div>
+
+    <!-- Pagos -->
+    <div class="grid-pagos">
+        <div class="pago-box pago-ganado">
+            <h3>Pago — Dueño del Ganado</h3>
+            <div class="fila">
+                <span class="label">Recuperación inversión</span>
+                <span class="valor verde">${quetzales(inversion)}</span>
+            </div>
+            <div class="fila">
+                <span class="label">Recuperación gastos</span>
+                <span class="valor verde">${quetzales(totalGastos)}</span>
+            </div>
+            ${totalPrestamos > 0 ? `
+            <div class="fila">
+                <span class="label">Préstamos recuperados</span>
+                <span class="valor verde">${quetzales(totalPrestamos)}</span>
+            </div>` : ''}
+            <div class="fila">
+                <span class="label">Ganancia (50%)</span>
+                <span class="valor verde">${quetzales(mitad)}</span>
+            </div>
+            <div class="pago-total">
+                <span>TOTAL</span>
+                <span>${quetzales(pagoGanado)}</span>
+            </div>
+        </div>
+
+        <div class="pago-box pago-finca">
+            <h3>Pago — Dueño de la Finca (${PROPIETARIO_NOMBRE})</h3>
+            <div class="fila">
+                <span class="label">Ganancia (50%)</span>
+                <span class="valor dorado">${quetzales(mitad)}</span>
+            </div>
+            ${totalPrestamos > 0 ? `
+            <div class="fila">
+                <span class="label">(-) Préstamos otorgados</span>
+                <span class="valor rojo">- ${quetzales(totalPrestamos)}</span>
+            </div>` : ''}
+            <div class="pago-total">
+                <span>TOTAL</span>
+                <span>${quetzales(pagoFinca)}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Frankd Development, ${new Date().getFullYear()} © &nbsp;·&nbsp; Documento generado el ${fechaHoy}
+    </div>
+
+    <script>
+        window.onload = () => window.print();
+    </script>
+</body>
+</html>`);
+        ventana.document.close();
+
+    } catch (e) {
+        console.error(e);
+        Toast.fire({ icon: 'error', title: 'Error al generar PDF' });
+    }
+};
+
+
+// ── DESACTIVAR LOTE ───────────────────────────────────────────────────────────
+window.desactivarLote = async (id, nombre) => {
+    const conf = await Swal.fire({
+        icon: 'warning',
+        title: '¿Archivar lote?',
+        html: `<strong style="color:var(--ps-dorado);">${nombre}</strong><br>
+               <small style="color:#a08060;">
+               El lote pasará al historial. Los datos se conservan.
+               </small>`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, archivar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#5C3A1E',
+        cancelButtonColor: '#2a1f0e',
+        background: '#1c1208',
+        color: '#f5edd6'
+    });
+    if (!conf.isConfirmed) return;
+
+    try {
+        const body = new FormData();
+        body.append('id', id);
+        const r = await fetch(`${BASE}/API/lotes/desactivar`, { method: 'POST', body });
+        const d = await r.json();
+        Toast.fire({ icon: d.codigo === 1 ? 'success' : 'error', title: d.mensaje });
+        if (d.codigo === 1) cargarLotes('activo');
+    } catch (e) {
+        Toast.fire({ icon: 'error', title: e.message });
+    }
+};
+
+// ── REGISTRAR BAJA ────────────────────────────────────────────────────────────
+window.mostrarFormBaja = async (loteId, loteNombre, cabezasActuales) => {
+    const { value: formValues, isConfirmed } = await Swal.fire({
+        title: `🐄 Registrar Baja — ${loteNombre}`,
+        html: `
+            <style>
+                .swal2-popup input,.swal2-popup select { color:#f5edd6!important; }
+                .swal2-popup input::placeholder { color:#8B6914!important;opacity:1; }
+            </style>
+            <div style="text-align:left;font-size:.85rem;">
+                <div style="
+                    background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);
+                    border-radius:8px;padding:.6rem;margin-bottom:.75rem;
+                    font-size:.8rem;color:#E74C3C;">
+                    <i class="bi bi-info-circle"></i>
+                    Cabezas actuales en el lote: <strong>${cabezasActuales}</strong>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+                    <div>
+                        <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">
+                            Cantidad *
+                        </label>
+                        <input id="b-cantidad" type="number" min="1" max="${cabezasActuales}"
+                            class="form-control" placeholder="Ej: 2"
+                            style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                    </div>
+                    <div>
+                        <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">
+                            Motivo *
+                        </label>
+                        <select id="b-motivo" class="form-select"
+                            style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                            <option value="muerte">Muerte natural</option>
+                            <option value="enfermedad">Enfermedad</option>
+                            <option value="robo">Robo</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom:.75rem;">
+                    <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">
+                        Fecha *
+                    </label>
+                    <input id="b-fecha" type="date" class="form-control"
+                        value="${new Date().toISOString().split('T')[0]}"
+                        style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                </div>
+                <div>
+                    <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">
+                        Descripción
+                    </label>
+                    <input id="b-desc" type="text" class="form-control"
+                        placeholder="Descripción del incidente..."
+                        style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                </div>
+            </div>`,
+        background: '#1c1208',
+        color: '#f5edd6',
+        showCancelButton: true,
+        confirmButtonText: 'Registrar baja',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#8B0000',
+        cancelButtonColor: '#5C3A1E',
+        width: '480px',
+        preConfirm: () => {
+            const cantidad = document.getElementById('b-cantidad').value;
+            const fecha = document.getElementById('b-fecha').value;
+            if (!cantidad || cantidad <= 0) {
+                Swal.showValidationMessage('La cantidad es obligatoria');
+                return false;
+            }
+            if (parseInt(cantidad) > cabezasActuales) {
+                Swal.showValidationMessage(`No puedes registrar más de ${cabezasActuales} bajas`);
+                return false;
+            }
+            if (!fecha) {
+                Swal.showValidationMessage('La fecha es obligatoria');
+                return false;
+            }
+            return {
+                cantidad,
+                motivo: document.getElementById('b-motivo').value,
+                fecha,
+                descripcion: document.getElementById('b-desc').value.trim()
+            };
+        }
+    });
+
+    if (!isConfirmed || !formValues) return;
+
+    try {
+        const body = new FormData();
+        Object.entries(formValues).forEach(([k, v]) => body.append(k, v));
+        body.append('lote_id', loteId);
+        const r = await fetch(`${BASE}/API/lotes/registrar-baja`, { method: 'POST', body });
+        const text = await r.text();
+        const d = JSON.parse(text);
+        Toast.fire({ icon: d.codigo === 1 ? 'success' : 'error', title: d.mensaje });
+        if (d.codigo === 1) cargarLotes('activo');
+    } catch (e) {
+        Toast.fire({ icon: 'error', title: e.message });
+    }
+};
+
+// ── GASTOS POR LOTE ───────────────────────────────────────────────────────────
+window.mostrarGastosLote = async (loteId, loteNombre) => {
+    try {
+        const r = await fetch(`${BASE}/API/gastos/listar?finca_id=${FINCA_ACTIVA.id}`);
+        const d = await r.json();
+        const gastosDelLote = d.datos.filter(g => g.lote_id == loteId);
+        const total = gastosDelLote.reduce((s, g) => s + parseFloat(g.monto), 0);
+
+        await Swal.fire({
+            title: `💰 Gastos — ${loteNombre}`,
+            width: '600px',
+            background: '#1c1208',
+            color: '#f5edd6',
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cerrar',
+            cancelButtonColor: '#5C3A1E',
+            html: `
+                <div style="text-align:left;">
+                    <!-- Total -->
+                    <div style="
+                        background:rgba(0,0,0,.2);border:1px solid rgba(201,168,76,.2);
+                        border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;
+                        display:flex;align-items:center;gap:.5rem;font-size:.85rem;">
+                        <i class="bi bi-cash-stack" style="color:var(--ps-dorado);font-size:1.2rem;"></i>
+                        <span style="color:#a08060;">Total gastos de este lote:</span>
+                        <strong style="color:var(--ps-dorado);margin-left:.25rem;">${quetzales(total)}</strong>
+                        <button onclick="mostrarFormGastoLote(${loteId})"
+                            style="margin-left:auto;background:linear-gradient(135deg,var(--ps-dorado),#a07828);
+                            border:none;border-radius:8px;color:var(--ps-negro);
+                            padding:.4rem .8rem;font-size:.78rem;font-weight:700;cursor:pointer;">
+                            <i class="bi bi-plus-circle-fill"></i> Nuevo Gasto
+                        </button>
+                    </div>
+
+                    <!-- Lista -->
+                    ${!gastosDelLote.length ? `
+                    <div style="text-align:center;padding:2rem;color:#7c6a3a;">
+                        <i class="bi bi-cash-stack" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.5rem;"></i>
+                        No hay gastos para este lote
+                    </div>` : `
+                    <div style="display:flex;flex-direction:column;gap:.5rem;max-height:350px;overflow-y:auto;">
+                        ${gastosDelLote.map(g => {
+                const info = categoriaInfo[g.categoria] || categoriaInfo['otro'];
+                return `
+                            <div style="background:rgba(0,0,0,.2);border:1px solid var(--ps-cafe);
+                                border-left:3px solid ${info.color};border-radius:8px;
+                                padding:.65rem 1rem;display:flex;align-items:center;gap:.75rem;">
+                                <div style="background:${info.color}22;border-radius:8px;
+                                    width:32px;height:32px;display:flex;align-items:center;
+                                    justify-content:center;color:${info.color};flex-shrink:0;">
+                                    <i class="bi ${info.icon}"></i>
+                                </div>
+                                <div style="flex:1;">
+                                    <div style="font-size:.82rem;font-weight:600;color:var(--ps-crema);">
+                                        ${g.descripcion || info.label}
+                                    </div>
+                                    <div style="font-size:.72rem;color:#7c6a3a;">
+                                        <i class="bi bi-calendar" style="color:var(--ps-dorado);"></i> ${g.fecha}
+                                    </div>
+                                </div>
+                                <strong style="color:var(--ps-dorado);font-size:.9rem;">${quetzales(g.monto)}</strong>
+                                <button onclick="eliminarGastoDesdeModal(${g.id}, ${loteId}, '${loteNombre}')"
+                                    style="background:rgba(92,10,10,.2);border:1px solid #5C0A0A;
+                                    border-radius:6px;color:#c0392b;padding:.25rem .4rem;
+                                    cursor:pointer;font-size:.75rem;">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>`;
+            }).join('')}
+                    </div>`}
+                </div>`
+        });
+    } catch (e) {
+        Toast.fire({ icon: 'error', title: e.message });
+    }
+};
+
+// ── NUEVO GASTO DESDE MODAL DE LOTE ──────────────────────────────────────────
+window.mostrarFormGastoLote = async (loteId) => {
+    Swal.close();
+
+    const { value: formValues, isConfirmed } = await Swal.fire({
+        title: 'Nuevo Gasto',
+        html: `
+            <style>
+                .swal2-popup input,.swal2-popup select { color:#f5edd6!important; }
+                .swal2-popup input::placeholder { color:#8B6914!important;opacity:1; }
+            </style>
+            <div style="text-align:left;font-size:.85rem;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+                    <div>
+                        <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">Categoría *</label>
+                        <select id="g-cat" class="form-select"
+                            style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                            <option value="medicina">Medicina</option>
+                            <option value="sal">Sal</option>
+                            <option value="alimentacion">Alimentación</option>
+                            <option value="transporte">Transporte</option>
+                            <option value="mano_obra">Mano de obra</option>
+                            <option value="infraestructura">Infraestructura</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">Monto (Q) *</label>
+                        <input id="g-monto" type="number" min="0" step="0.01" class="form-control"
+                            placeholder="Ej: 1500.00"
+                            style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                    </div>
+                </div>
+                <div style="margin-bottom:.75rem;">
+                    <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">Descripción</label>
+                    <input id="g-desc" type="text" class="form-control"
+                        placeholder="Ej: Desparasitante"
+                        style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                </div>
+                <div>
+                    <label style="color:var(--ps-dorado);font-size:.75rem;font-weight:600;">Fecha *</label>
+                    <input id="g-fecha" type="date" class="form-control"
+                        value="${new Date().toISOString().split('T')[0]}"
+                        style="margin-top:.3rem;background:#2a1f0e;border:1px solid var(--ps-cafe);">
+                </div>
+            </div>`,
+        background: '#1c1208', color: '#f5edd6',
+        showCancelButton: true,
+        confirmButtonText: 'Registrar', cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#C9A84C', cancelButtonColor: '#5C3A1E',
+        width: '480px',
+        preConfirm: () => {
+            const monto = document.getElementById('g-monto').value;
+            const fecha = document.getElementById('g-fecha').value;
+            if (!monto || monto <= 0) { Swal.showValidationMessage('El monto es obligatorio'); return false; }
+            if (!fecha) { Swal.showValidationMessage('La fecha es obligatoria'); return false; }
+            return {
+                categoria: document.getElementById('g-cat').value,
+                monto,
+                descripcion: document.getElementById('g-desc').value.trim(),
+                fecha,
+                lote_id: loteId
+            };
+        }
+    });
+
+    if (!isConfirmed || !formValues) return;
+
+    try {
+        const body = new FormData();
+        Object.entries(formValues).forEach(([k, v]) => body.append(k, v));
+        body.append('finca_id', FINCA_ACTIVA.id);
+        const r = await fetch(`${BASE}/API/gastos/crear`, { method: 'POST', body });
+        const text = await r.text();
+        const d = JSON.parse(text);
+        Toast.fire({ icon: d.codigo === 1 ? 'success' : 'error', title: d.mensaje });
+        if (d.codigo === 1) cargarLotes('activo');
+    } catch (e) {
+        Toast.fire({ icon: 'error', title: e.message });
+    }
+};
+
+// ── ELIMINAR GASTO DESDE MODAL DE LOTE ───────────────────────────────────────
+window.eliminarGastoDesdeModal = async (gastoId, loteId, loteNombre) => {
+    const conf = await Swal.fire({
+        icon: 'warning', title: '¿Eliminar gasto?',
+        text: 'Esta acción no se puede deshacer.',
+        showCancelButton: true, confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar', confirmButtonColor: '#8B0000',
+        cancelButtonColor: '#5C3A1E', background: '#1c1208', color: '#f5edd6'
+    });
+    if (!conf.isConfirmed) return;
+
+    try {
+        const body = new FormData();
+        body.append('id', gastoId);
+        const r = await fetch(`${BASE}/API/gastos/eliminar`, { method: 'POST', body });
+        const d = await r.json();
+        Toast.fire({ icon: d.codigo === 1 ? 'success' : 'error', title: d.mensaje });
+        if (d.codigo === 1) {
+            // Reabrir el modal de gastos del lote
+            mostrarGastosLote(loteId, loteNombre);
+        }
+    } catch (e) {
+        Toast.fire({ icon: 'error', title: e.message });
+    }
+};
 window.eliminarPrestamo = async (id) => {
     const conf = await Swal.fire({
         icon: 'warning', title: '¿Eliminar préstamo?', text: 'Esta acción no se puede deshacer.',

@@ -10,7 +10,7 @@ class Lotes extends ActiveRecord
         'finca_id',
         'nombre',
         'tipo',
-        'etapa',
+        'situacion',
         'cantidad_cabezas',
         'cantidad_actual',
         'inversion_inicial',
@@ -24,11 +24,14 @@ class Lotes extends ActiveRecord
     public $nombre;
     public $tipo;
     public $etapa;
+    public $situacion;
     public $cantidad_cabezas;
     public $cantidad_actual;
     public $inversion_inicial = 0;
     public $peso_promedio_kg;
     public $fecha_ingreso;
+    public $fecha_venta;
+    public $precio_venta_total;
     public $observaciones;
 
     public function __construct($args = [])
@@ -36,7 +39,7 @@ class Lotes extends ActiveRecord
         $this->finca_id          = $args['finca_id']          ?? null;
         $this->nombre            = $args['nombre']            ?? '';
         $this->tipo              = $args['tipo']              ?? 'bovino';
-        $this->etapa             = $args['etapa']             ?? 'cría';
+        $this->situacion         = $args['situacion']         ?? 'activo';
         $this->cantidad_cabezas  = $args['cantidad_cabezas']  ?? 0;
         $this->cantidad_actual   = $args['cantidad_actual']   ?? 0;
         $this->inversion_inicial = $args['inversion_inicial'] ?? 0;

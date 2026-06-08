@@ -48,6 +48,11 @@ $router->post('/API/prestamos/eliminar', [PrestamosController::class, 'eliminarA
 
 
 
+$router->post('/API/lotes/desactivar',      [LotesController::class, 'desactivarAPI']);
+$router->post('/API/lotes/registrar-baja',  [LotesController::class, 'registrarBajaAPI']);
+$router->get('/API/lotes/bajas',            [LotesController::class, 'listarBajasAPI']);
+
+
 
 $router->get('/', [AppController::class, 'index']);
 

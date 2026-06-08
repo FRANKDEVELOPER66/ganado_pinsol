@@ -124,15 +124,25 @@ class LotesController
             exit;
         }
 
-        $db   = \Model\ActiveRecord::getDB();
+        $db = \Model\ActiveRecord::getDB();
+
+        // ✅ Ahora actualiza AMBOS campos: etapa Y situacion
         $stmt = $db->prepare("
         UPDATE lotes SET
             etapa              = 'vendido',
+            situacion          = 'vendido',
             fecha_venta        = ?,
             precio_venta_total = ?
         WHERE id = ?
     ");
         $stmt->execute([$fecha, $precio, $id]);
+
+        // ✅ Saldar préstamos vinculados a este lote
+        $stmt = $db->prepare("
+        UPDATE prestamos SET saldado = 1
+        WHERE lote_id = ? AND saldado = 0
+    ");
+        $stmt->execute([$id]);
 
         echo json_encode(['codigo' => 1, 'mensaje' => 'Lote marcado como vendido']);
     }
@@ -155,5 +165,102 @@ class LotesController
 
         $lote->eliminar();
         echo json_encode(['codigo' => 1, 'mensaje' => 'Lote eliminado correctamente']);
+    }
+
+    // ── Desactivar lote (soft delete) ─────────────────────────────────────────────
+    public static function desactivarAPI(Router $router): void
+    {
+        getHeadersApi();
+
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) {
+            echo json_encode(['codigo' => 0, 'mensaje' => 'ID inválido']);
+            exit;
+        }
+
+        $db   = \Model\ActiveRecord::getDB();
+        $stmt = $db->prepare("UPDATE lotes SET situacion = 'inactivo' WHERE id = ?");
+        $stmt->execute([$id]);
+
+        echo json_encode(['codigo' => 1, 'mensaje' => 'Lote desactivado correctamente']);
+    }
+
+    // ── Registrar baja ────────────────────────────────────────────────────────────
+    public static function registrarBajaAPI(Router $router): void
+    {
+        getHeadersApi();
+
+        $lote_id    = (int)($_POST['lote_id']    ?? 0);
+        $cantidad   = (int)($_POST['cantidad']   ?? 0);
+        $motivo     = $_POST['motivo']           ?? 'muerte';
+        $descripcion = trim($_POST['descripcion'] ?? '');
+        $fecha      = $_POST['fecha']            ?? date('Y-m-d');
+
+        if (!$lote_id || $cantidad <= 0) {
+            echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
+            exit;
+        }
+
+        // Verificar que no exceda las cabezas actuales
+        $lote = \Model\Lotes::find($lote_id);
+        if (!$lote) {
+            echo json_encode(['codigo' => 0, 'mensaje' => 'Lote no encontrado']);
+            exit;
+        }
+
+        if ($cantidad > (int)$lote->cantidad_actual) {
+            echo json_encode([
+                'codigo'  => 0,
+                'mensaje' => "Solo hay {$lote->cantidad_actual} cabezas disponibles"
+            ]);
+            exit;
+        }
+
+        $db = \Model\ActiveRecord::getDB();
+
+        // Registrar la baja
+        $stmt = $db->prepare("
+        INSERT INTO bajas_lote (lote_id, cantidad, motivo, descripcion, fecha)
+        VALUES (?, ?, ?, ?, ?)
+    ");
+        $stmt->execute([$lote_id, $cantidad, $motivo, $descripcion, $fecha]);
+
+        // Actualizar cantidad actual del lote
+        $stmt = $db->prepare("
+        UPDATE lotes SET cantidad_actual = cantidad_actual - ? WHERE id = ?
+    ");
+        $stmt->execute([$cantidad, $lote_id]);
+
+        $quedan = $lote->cantidad_actual - $cantidad;
+        echo json_encode([
+            'codigo'  => 1,
+            'mensaje' => "Baja registrada en '{$lote->nombre}'. Quedan {$quedan} cabezas"
+        ]);
+    }
+
+    // ── Listar bajas de un lote ───────────────────────────────────────────────────
+    public static function listarBajasAPI(Router $router): void
+    {
+        getHeadersApi();
+
+        $lote_id = (int)($_GET['lote_id'] ?? 0);
+        if (!$lote_id) {
+            echo json_encode(['codigo' => 0, 'mensaje' => 'Lote inválido']);
+            exit;
+        }
+
+        $bajas = \Model\ActiveRecord::fetchArray("
+        SELECT * FROM bajas_lote
+        WHERE lote_id = {$lote_id}
+        ORDER BY fecha DESC
+    ");
+
+        $total = array_sum(array_column($bajas, 'cantidad'));
+
+        echo json_encode([
+            'codigo' => 1,
+            'datos'  => $bajas,
+            'total'  => $total
+        ], JSON_UNESCAPED_UNICODE);
     }
 }

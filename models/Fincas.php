@@ -27,21 +27,23 @@ class Fincas extends ActiveRecord
     public static function porPropietario(int $propietario_id): array
     {
         return self::fetchArray("
-            SELECT f.*,
-                   p.nombre as propietario_nombre,
-                   COUNT(l.id) as total_lotes,
-                   COALESCE(SUM(CASE WHEN l.etapa != 'vendido' THEN l.cantidad_actual ELSE 0 END), 0) as total_cabezas,
-                   COALESCE(SUM(g.monto), 0) as total_gastos
-            FROM fincas f
-            JOIN propietarios p ON p.id = f.propietario_id
-            LEFT JOIN lotes l ON l.finca_id = f.id
-            LEFT JOIN gastos g ON g.finca_id = f.id
-            WHERE f.propietario_id = {$propietario_id}
-            GROUP BY f.id
-            ORDER BY f.nombre ASC
-        ") ?? [];
+        SELECT f.*,
+               p.nombre as propietario_nombre,
+               COUNT(DISTINCT CASE WHEN l.situacion = 'activo' THEN l.id END) as total_lotes,
+               COALESCE(SUM(CASE WHEN l.situacion = 'activo' THEN l.cantidad_actual ELSE 0 END), 0) as total_cabezas,
+               COALESCE((
+                   SELECT SUM(g2.monto) 
+                   FROM gastos g2 
+                   WHERE g2.finca_id = f.id
+               ), 0) as total_gastos
+        FROM fincas f
+        JOIN propietarios p ON p.id = f.propietario_id
+        LEFT JOIN lotes l ON l.finca_id = f.id
+        WHERE f.propietario_id = {$propietario_id}
+        GROUP BY f.id
+        ORDER BY f.nombre ASC
+    ") ?? [];
     }
-
     public function validar(): array
     {
         static::$alertas = [];

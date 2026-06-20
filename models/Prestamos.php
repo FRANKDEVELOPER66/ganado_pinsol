@@ -13,7 +13,7 @@ class Prestamos extends ActiveRecord
         'descripcion',
         'monto',
         'fecha',
-        'saldado'   // ✅ agregar
+        'saldado'
     ];
 
     public $id;
@@ -33,20 +33,20 @@ class Prestamos extends ActiveRecord
         $this->descripcion         = $args['descripcion']         ?? '';
         $this->monto               = $args['monto']               ?? 0;
         $this->fecha               = $args['fecha']               ?? null;
-        $this->saldado             = $args['saldado']             ?? 0; // ✅ agregar
+        $this->saldado             = $args['saldado']             ?? 0;
     }
 
     public static function porFinca(int $finca_id): array
     {
         return self::fetchArray("
-            SELECT p.*,
+        SELECT p.*,
        l.nombre as lote_nombre,
-       l.etapa as lote_etapa
+       l.situacion as lote_situacion
 FROM prestamos p
 LEFT JOIN lotes l ON l.id = p.lote_id
 WHERE p.finca_id = {$finca_id}
 ORDER BY p.fecha DESC
-        ") ?? [];
+    ") ?? [];
     }
 
     public static function totalPorLote(int $lote_id): float
@@ -57,6 +57,18 @@ ORDER BY p.fecha DESC
             WHERE lote_id = {$lote_id}
         ");
         return (float)($resultado[0]['total'] ?? 0);
+    }
+
+    // ✅ ACTUALIZADO — valida si la finca tiene al menos un lote ACTIVO
+    public static function fincaTieneLotesActivos(int $finca_id): bool
+    {
+        $resultado = self::fetchArray("
+        SELECT COUNT(*) as total
+        FROM lotes
+        WHERE finca_id = {$finca_id}
+        AND situacion = 'activo'
+    ");
+        return (int)($resultado[0]['total'] ?? 0) > 0;
     }
 
     public function validar(): array

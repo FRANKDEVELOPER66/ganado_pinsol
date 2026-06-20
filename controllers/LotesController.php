@@ -10,17 +10,17 @@ class LotesController
     public static function listarAPI(Router $router): void
     {
         getHeadersApi();
-        $finca_id = (int)($_GET['finca_id'] ?? 0);
+        $finca_id  = (int)($_GET['finca_id']  ?? 0);
+        $situacion = $_GET['situacion'] ?? '';
 
         if (!$finca_id) {
             echo json_encode(['codigo' => 0, 'mensaje' => 'Finca inválida']);
             exit;
         }
 
-        $lotes = Lotes::porFinca($finca_id);
+        $lotes = Lotes::porFincaFiltrado($finca_id, $situacion);
         echo json_encode(['codigo' => 1, 'datos' => $lotes], JSON_UNESCAPED_UNICODE);
     }
-
     public static function crearAPI(Router $router): void
     {
         getHeadersApi();
@@ -102,7 +102,7 @@ class LotesController
             (int)($_POST['cantidad_cabezas']    ?? $lote->cantidad_cabezas),
             (int)($_POST['cantidad_cabezas']    ?? $lote->cantidad_cabezas),
             (float)($_POST['inversion_inicial'] ?? $lote->inversion_inicial),
-            $_POST['peso_promedio_kg']          ?: null,
+            $_POST['peso_promedio_kg']          ?? null,
             $_POST['fecha_ingreso']             ?? $lote->fecha_ingreso,
             trim($_POST['observaciones']        ?? ''),
             $id

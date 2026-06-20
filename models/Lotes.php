@@ -63,6 +63,27 @@ class Lotes extends ActiveRecord
         ") ?? [];
     }
 
+    public static function porFincaFiltrado(int $finca_id, string $situacion = ''): array
+    {
+        $where = "l.finca_id = {$finca_id}";
+        if ($situacion === 'activo') {
+            $where .= " AND l.situacion = 'activo'";
+        } elseif ($situacion === 'historial') {
+            $where .= " AND l.situacion IN ('vendido', 'inactivo')";
+        }
+
+        return self::fetchArray("
+        SELECT l.*,
+               COALESCE(SUM(b.cantidad), 0) as total_bajas,
+               COALESCE(SUM(g.monto), 0) as total_gastos
+        FROM lotes l
+        LEFT JOIN bajas_lote b ON b.lote_id = l.id
+        LEFT JOIN gastos g ON g.lote_id = l.id
+        WHERE {$where}
+        GROUP BY l.id
+        ORDER BY l.fecha_ingreso DESC
+    ") ?? [];
+    }
     public function validar(): array
     {
         static::$alertas = [];

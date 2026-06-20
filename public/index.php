@@ -4,6 +4,8 @@ require_once __DIR__ . '/../includes/app.php';
 
 use MVC\Router;
 use Controllers\AppController;
+use Controllers\AuthController;
+use Controllers\DashboardController;
 use Controllers\FincasController;
 use Controllers\GastosController;
 use Controllers\LotesController;
@@ -55,6 +57,17 @@ $router->get('/API/lotes/bajas',            [LotesController::class, 'listarBaja
 
 
 $router->get('/', [AppController::class, 'index']);
+
+
+
+
+// ── AUTH (Android) ────────────────────────────────────────────────────────────
+$router->post('/API/auth/login',  [AuthController::class, 'loginAPI']);
+$router->post('/API/auth/logout', [AuthController::class, 'logoutAPI']);
+
+$router->get('/API/dashboard/resumen', [DashboardController::class, 'resumenAPI']);
+
+$router->get('/API/dashboard/liquidacion', [DashboardController::class, 'liquidacionAPI']);
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
 $router->comprobarRutas();

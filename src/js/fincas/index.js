@@ -1651,15 +1651,12 @@ const renderPrestamos = (lista, total) => {
         <strong style="color:#E74C3C;margin-left:.25rem;">${quetzales(total)}</strong>`;
 
     if (!lista.length) {
-        console.log('Préstamos:', lista);
         document.getElementById('prestamosLista').innerHTML = `
             <div style="text-align:center;padding:2rem;color:#7c6a3a;">
                 <i class="bi bi-cash-coin" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.5rem;"></i>
                 No hay préstamos registrados</div>`;
         return;
     }
-
-    console.log('Préstamos:', lista);
 
     document.getElementById('prestamosLista').innerHTML = `
         <div style="display:flex;flex-direction:column;gap:.5rem;">
@@ -1675,7 +1672,7 @@ const renderPrestamos = (lista, total) => {
             <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:center;gap:.5rem;">
     <div style="font-size:.85rem;font-weight:600;color:var(--ps-crema);">${p.propietario_nombre}</div>
-    ${p.lote_etapa === 'vendido' ? `
+    ${p.lote_situacion === 'vendido' ? `
     <span style="background:rgba(76,175,125,.2);border:1px solid #4CAF7D;
         border-radius:20px;padding:.1rem .5rem;font-size:.7rem;
         color:#4CAF7D;font-weight:700;">
@@ -1698,16 +1695,33 @@ const renderPrestamos = (lista, total) => {
 };
 
 window.mostrarFormPrestamo = async () => {
-    let lotesOpts = '<option value="">— Sin lote específico —</option>';
+    let todosLotes = [];
     try {
         const r = await fetch(`${BASE}/API/lotes/listar?finca_id=${FINCA_ACTIVA.id}`);
         const d = await r.json();
-        if (d.codigo === 1) {
-            lotesOpts += d.datos
-                .filter(l => l.etapa !== 'vendido')
-                .map(l => `<option value="${l.id}">${l.nombre}</option>`).join('');
-        }
+        if (d.codigo === 1) todosLotes = d.datos;
     } catch { }
+
+    // ✅ ACTUALIZADO — solo cuentan los lotes con situacion === 'activo'
+    const lotesActivos = todosLotes.filter(l => l.situacion === 'activo');
+
+    if (!lotesActivos.length) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'No hay lotes activos',
+            html: `Debes tener al menos un <strong style="color:var(--ps-dorado);">lote activo</strong>
+                   en esta finca antes de poder registrar un préstamo.<br>
+                   <small style="color:#a08060;">Los lotes vendidos o en historial no habilitan préstamos.</small>`,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#C9A84C',
+            background: '#1c1208', color: '#f5edd6'
+        });
+        return;
+    }
+
+    let lotesOpts = '<option value="">— Sin lote específico —</option>';
+    lotesOpts += lotesActivos
+        .map(l => `<option value="${l.id}">${l.nombre}</option>`).join('');
 
     const { value: formValues, isConfirmed } = await Swal.fire({
         title: 'Nuevo Préstamo',
@@ -1782,7 +1796,6 @@ window.mostrarFormPrestamo = async () => {
         if (d.codigo === 1) cargarPrestamos();
     } catch (e) { Toast.fire({ icon: 'error', title: e.message }); }
 };
-
 
 
 window.imprimirLiquidacion = async (loteId) => {

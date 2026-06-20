@@ -31,8 +31,24 @@ class PrestamosController
     {
         getHeadersApi();
 
+        $finca_id = (int)($_POST['finca_id'] ?? 0);
+
+        if (!$finca_id) {
+            echo json_encode(['codigo' => 0, 'mensaje' => 'Finca inválida']);
+            exit;
+        }
+
+        // ✅ ACTUALIZADO — no se puede prestar si la finca no tiene lotes ACTIVOS
+        if (!Prestamos::fincaTieneLotesActivos($finca_id)) {
+            echo json_encode([
+                'codigo'  => 0,
+                'mensaje' => 'Debes tener al menos un lote activo en esta finca antes de registrar un préstamo'
+            ]);
+            exit;
+        }
+
         $prestamo = new Prestamos([
-            'finca_id'           => (int)($_POST['finca_id']          ?? 0),
+            'finca_id'           => $finca_id,
             'lote_id'            => $_POST['lote_id'] ? (int)$_POST['lote_id'] : null,
             'propietario_nombre' => trim($_POST['propietario_nombre']  ?? ''),
             'descripcion'        => trim($_POST['descripcion']         ?? ''),

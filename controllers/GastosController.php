@@ -35,7 +35,7 @@ class GastosController
 
         $gasto = new Gastos([
             'finca_id'    => (int)($_POST['finca_id']  ?? 0),
-            'lote_id'     => $_POST['lote_id'] ? (int)$_POST['lote_id'] : null,
+            'lote_id' => !empty($_POST['lote_id']) ? (int)$_POST['lote_id'] : null,
             'categoria'   => $_POST['categoria']       ?? 'otro',
             'descripcion' => trim($_POST['descripcion'] ?? ''),
             'monto'       => (float)($_POST['monto']   ?? 0),

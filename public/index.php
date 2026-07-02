@@ -68,6 +68,12 @@ $router->post('/API/auth/logout', [AuthController::class, 'logoutAPI']);
 $router->get('/API/dashboard/resumen', [DashboardController::class, 'resumenAPI']);
 
 $router->get('/API/dashboard/liquidacion', [DashboardController::class, 'liquidacionAPI']);
-
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+$router->get('/login',                        [AuthController::class, 'login']);
+$router->post('/API/auth/verificar-catalogo', [AuthController::class, 'verificarCatalogoAPI']);
+$router->post('/API/auth/crear-password',     [AuthController::class, 'crearPasswordAPI']);
+$router->post('/API/auth/login',              [AuthController::class, 'loginAPI']);
+$router->get('/logout',                       [AuthController::class, 'logoutGET']);
+$router->post('/API/auth/logout',             [AuthController::class, 'logoutAPI']);
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
 $router->comprobarRutas();
